@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://cb2va4uc6oqvk"]
+
+[ext_resource type="Texture2D" uid="uid://bnr37mq2gxj6m" path="res://assets/sprites/other/StagePlaceholder.jpg" id="1_brnyg"]
+
+[sub_resource type="Curve2D" id="Curve2D_brnyg"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 348, 484, 0, 0, 0, 0, 1240, 484)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_jqgvv"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 289, 355, 0, 0, 0, 0, 1234, 357)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_v7fus"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 221, 228, 0, 0, 0, 0, 1236, 228)
+}
+point_count = 2
+
+[node name="Node2D" type="Node2D" unique_id=1352569920]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=64234917]
+anchor_mode = 0
+
+[node name="StagePlaceholder" type="Sprite2D" parent="." unique_id=552308722]
+position = Vector2(577.7692, 336)
+rotation = 1.5707964
+scale = Vector2(0.445, 0.49843255)
+texture = ExtResource("1_brnyg")
+
+[node name="Paths" type="Node" parent="." unique_id=1949733715]
+
+[node name="Bottom Path" type="Path2D" parent="Paths" unique_id=1214257122]
+curve = SubResource("Curve2D_brnyg")
+
+[node name="PathFollow2D" type="PathFollow2D" parent="Paths/Bottom Path" unique_id=907745481]
+position = Vector2(348, 484)
+
+[node name="Middle Path" type="Path2D" parent="Paths" unique_id=1503249958]
+curve = SubResource("Curve2D_jqgvv")
+
+[node name="PathFollow2D" type="PathFollow2D" parent="Paths/Middle Path" unique_id=1328445182]
+position = Vector2(289, 355)
+rotation = 0.002116399
+
+[node name="Top Path" type="Path2D" parent="Paths" unique_id=304074491]
+position = Vector2(-1, 0)
+curve = SubResource("Curve2D_v7fus")
+
+[node name="PathFollow2D" type="PathFollow2D" parent="Paths/Top Path" unique_id=1087990657]
+position = Vector2(221, 228)

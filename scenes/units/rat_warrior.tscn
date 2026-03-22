@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://ngxa2e6qsmk7"]
+
+[ext_resource type="Script" uid="uid://cm2bli8mn2x4b" path="res://src/units/rats/rat_warrior.gd" id="1_mjmsf"]
+[ext_resource type="Texture2D" uid="uid://bhh4r4tpelokx" path="res://assets/sprites/other/ratwarrior_Placeholder.jpg" id="2_rgp6m"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1uypv"]
+size = Vector2(116, 223)
+
+[node name="RatWarrior" type="CharacterBody2D" unique_id=1441278366]
+script = ExtResource("1_mjmsf")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1877965108]
+position = Vector2(0, -1)
+texture = ExtResource("2_rgp6m")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=174196935]
+position = Vector2(-16, -7.5)
+shape = SubResource("RectangleShape2D_1uypv")

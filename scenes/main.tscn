@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://bka3084wtbpbo"]
+
+[ext_resource type="Script" uid="uid://dacj1xw6cjdte" path="res://main.gd" id="1_o5qli"]
+[ext_resource type="PackedScene" uid="uid://cbwnybfnpejkx" path="res://scenes/lanes/cat_lane.tscn" id="2_tbgi4"]
+[ext_resource type="PackedScene" uid="uid://ngxa2e6qsmk7" path="res://scenes/units/rat_warrior.tscn" id="4_o6xl0"]
+[ext_resource type="PackedScene" uid="uid://d0sqcproy0d6k" path="res://scenes/units/standard_cat.tscn" id="5_tipki"]
+
+[node name="main" type="Node2D" unique_id=111537585]
+script = ExtResource("1_o5qli")
+cat_scene = ExtResource("5_tipki")
+warrior_scene = ExtResource("4_o6xl0")
+
+[node name="CatLane" parent="." unique_id=2074044665 instance=ExtResource("2_tbgi4")]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=720810266]
+position = Vector2(480, 6)

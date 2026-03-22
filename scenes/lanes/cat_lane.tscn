@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://cbwnybfnpejkx"]
+
+[ext_resource type="Script" uid="uid://ct7ws27y2o6ox" path="res://src/lanes/cat_lane.gd" id="1_73hit"]
+
+[node name="Node2D" type="Node2D" unique_id=2074044665]
+script = ExtResource("1_73hit")
+
+[node name="Markers" type="Node2D" parent="." unique_id=602090406]
+position = Vector2(497, 309)
+rotation = 1.5707964
+scale = Vector2(0.4854005, 0.5828544)
+
+[node name="SpawnPoint" type="Marker2D" parent="Markers" unique_id=1577719099]
+position = Vector2(-636.58765, 852.70013)
+rotation = -1.5707964
+scale = Vector2(1.7156944, 2.0601544)
+gizmo_extents = 0.0
+
+[node name="LaneEnd" type="Marker2D" parent="Markers" unique_id=784211137]
+position = Vector2(-636.58765, 852.70013)
+rotation = -1.5707964
+scale = Vector2(1.7156944, 2.0601544)
+gizmo_extents = 960.0
+
+[node name="Units" type="Node2D" parent="." unique_id=586678223]
