@@ -1,0 +1,522 @@
+@startuml CatVsRat
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+skinparam classBackgroundColor #F8F8F8
+skinparam classBorderColor #555555
+skinparam arrowColor #333333
+skinparam noteBackgroundColor #FFFDE7
+skinparam noteBorderColor #BFAE60
+skinparam packageBackgroundColor #EEF2FF
+skinparam packageBorderColor #8899CC
+
+' ─────────────────────────────────────────
+'  ENUMERATIONS
+' ─────────────────────────────────────────
+
+enum CatBreed {
+    BLACK
+    SIAMESE
+    AMERICAN_SHORTHAIR
+    ORANGE
+}
+
+enum CatSize {
+    SLIM
+    FAT
+}
+
+enum GameState {
+    SHOP
+    LEVEL_INTRO
+    PLAYING
+    WIN
+    LOSE
+}
+
+enum GameSpeed {
+    NORMAL
+    FAST
+    VERY_FAST
+}
+
+' ─────────────────────────────────────────
+'  ABSTRACT BASE: UNIT
+' ─────────────────────────────────────────
+
+abstract class Unit {
+    # health : float
+    # maxHealth : float
+    # power : float
+    # attackSpeed : float
+    # attackCooldown : float
+    --
+    + takeDamage(amount : float) : void
+    + isAlive() : bool
+    + {abstract} update(delta : float) : void
+    + {abstract} onDeath() : void
+    - tickCooldown(delta : float) : void
+}
+
+note right of Unit
+  attackSpeed = 1 attack/sec
+  for all unit types.
+  Both cats and rats share
+  these core combat stats.
+end note
+
+' ─────────────────────────────────────────
+'  ABSTRACT BASE: CAT
+' ─────────────────────────────────────────
+
+abstract class Cat {
+    + breed : CatBreed
+    + size  : CatSize
+    + speed : float
+    # position : float
+    # lane : CatLane
+    # isRetreating : bool
+    --
+    + spawn(lane : CatLane) : void
+    + autoWalk(delta : float) : void
+    + attackNearest() : void
+    + retreat() : void
+    # {abstract} onKillWarrior(warrior : RatWarrior) : void
+    + isOffScreen() : bool
+}
+
+Cat --|> Unit
+
+note left of Cat
+  Cats auto-walk from position 0
+  toward lane end. Melee range = 1 unit.
+  Attacks anything 1 distance away
+  (diagonal or straight).
+  On reaching lane end → off-screen.
+end note
+
+' ─────────────────────────────────────────
+'  CONCRETE CATS: STANDARD (6 types)
+' ─────────────────────────────────────────
+
+class StandardCat {
+    --
+    + onKillWarrior(warrior : RatWarrior) : void
+}
+
+StandardCat --|> Cat
+
+note bottom of StandardCat
+  Covers 6 types:
+  slim/fat × black, siamese, american shorthair.
+  onKillWarrior() → retreat off-screen
+  (cat is used up for the round).
+end note
+
+' ─────────────────────────────────────────
+'  CONCRETE CATS: ORANGE (special behavior)
+' ─────────────────────────────────────────
+
+class OrangeCat {
+    - runAwayChance : float
+    - midFightTimer : float
+    --
+    + onKillWarrior(warrior : RatWarrior) : void
+    - maybeRunMidFight() : void
+}
+
+OrangeCat --|> Cat
+
+note bottom of OrangeCat
+  Slim and fat orange cats share
+  "run away mid-fight" special behavior.
+  maybeRunMidFight() can trigger retreat
+  before the enemy is dead.
+end note
+
+' ─────────────────────────────────────────
+'  ABSTRACT BASE: RAT
+' ─────────────────────────────────────────
+
+abstract class Rat {
+    # catnipReward : int
+    --
+    + {abstract} onDeath() : void
+    + getReward() : int
+}
+
+Rat --|> Unit
+
+' ─────────────────────────────────────────
+'  CONCRETE RATS
+' ─────────────────────────────────────────
+
+class RatTower {
+    + range : float
+    + position : float
+    - lane : RatLane
+    --
+    + update(delta : float) : void
+    + shootAt(target : Cat) : void
+    - getCatsInRange() : Cat[]
+    + onDeath() : void
+}
+
+RatTower --|> Rat
+
+note right of RatTower
+  Pre-placed on RatLanes.
+  Fires instant-damage projectiles.
+  Destroyed at HP 0, no respawn.
+end note
+
+class RatWarrior {
+    + position : float
+    - lane : CatLane
+    --
+    + update(delta : float) : void
+    + meleeAttackFront() : void
+    + onDeath() : void
+}
+
+RatWarrior --|> Rat
+
+note right of RatWarrior
+  Pre-placed on CatLanes.
+  Stands still, attacks front cat.
+  Death → triggers cat retreat.
+end note
+
+' ─────────────────────────────────────────
+'  PROJECTILE
+' ─────────────────────────────────────────
+
+class Projectile {
+    - damage  : float
+    - target  : Cat
+    - speed   : float
+    --
+    + update(delta : float) : void
+    + onHit() : void
+}
+
+RatTower "1" --> "0..*" Projectile : fires
+
+' ─────────────────────────────────────────
+'  LANE HIERARCHY
+' ─────────────────────────────────────────
+
+abstract class Lane {
+    + laneIndex : int
+    + length : float
+    --
+    + {abstract} getUnits() : Unit[]
+    + highlightForSpawn(active : bool) : void
+}
+
+class CatLane {
+    - cats      : Cat[]
+    - warriors  : RatWarrior[]
+    --
+    + getUnits() : Unit[]
+    + getCats() : Cat[]
+    + getWarriors() : RatWarrior[]
+    + addCat(cat : Cat) : void
+    + removeUnit(unit : Unit) : void
+    + hasLivingCats() : bool
+}
+
+CatLane --|> Lane
+
+class RatLane {
+    - towers     : RatTower[]
+    - projectiles: Projectile[]
+    --
+    + getUnits() : Unit[]
+    + getTowers() : RatTower[]
+    + addProjectile(p : Projectile) : void
+    + clearDestroyed() : void
+}
+
+RatLane --|> Lane
+
+' ─────────────────────────────────────────
+'  LEVEL CONFIGURATION
+' ─────────────────────────────────────────
+
+class LevelConfig {
+    + levelNumber : int
+    + ratTowerPlacements  : RatTowerPlacement[]
+    + ratWarriorPlacements: RatWarriorPlacement[]
+}
+
+class RatTowerPlacement {
+    + laneIndex : int
+    + position  : float
+    + statOverrides : Map
+}
+
+class RatWarriorPlacement {
+    + laneIndex : int
+    + position  : float
+    + statOverrides : Map
+}
+
+LevelConfig "1" *-- "1..*" RatTowerPlacement
+LevelConfig "1" *-- "1..*" RatWarriorPlacement
+
+' ─────────────────────────────────────────
+'  CAT DEFINITION (shop catalogue entry)
+' ─────────────────────────────────────────
+
+class CatDefinition {
+    + breed      : CatBreed
+    + size       : CatSize
+    + cost       : int
+    + baseSpeed  : float
+    + baseHealth : float
+    + basePower  : float
+    + baseAttackSpeed : float
+    + isSpecial  : bool
+    --
+    + createInstance() : Cat
+}
+
+note bottom of CatDefinition
+  isSpecial = true for both
+  orange slim and orange fat.
+  createInstance() returns
+  OrangeCat or StandardCat.
+end note
+
+' ─────────────────────────────────────────
+'  PLAYER INVENTORY
+' ─────────────────────────────────────────
+
+class PlayerInventory {
+    - catCounts : Map<CatDefinition, int>
+    - catnip    : int
+    --
+    + addCat(def : CatDefinition, qty : int) : void
+    + removeCat(def : CatDefinition) : bool
+    + getCatnip() : int
+    + addCatnip(amount : int) : void
+    + spendCatnip(amount : int) : bool
+    + hasCats() : bool
+    + getAvailableCats() : CatDefinition[]
+}
+
+note right of PlayerInventory
+  Level 1 starts with 1 black slim cat.
+  Catnip does not carry between levels.
+  hasCats() checks both on-screen
+  and in inventory (lose condition).
+end note
+
+' ─────────────────────────────────────────
+'  SHOP
+' ─────────────────────────────────────────
+
+class Shop {
+    - catalogue : CatDefinition[]
+    --
+    + getAffordable(catnip : int) : CatDefinition[]
+    + buy(def : CatDefinition, inv : PlayerInventory) : bool
+}
+
+Shop "1" --> "1..*" CatDefinition : lists
+
+' ─────────────────────────────────────────
+'  COMBAT SYSTEM
+' ─────────────────────────────────────────
+
+class CombatSystem {
+    --
+    + resolveMelee(attacker : Unit, defender : Unit, delta : float) : void
+    + resolveProjectileHit(proj : Projectile) : void
+    + isInMeleeRange(a : Unit, b : Unit) : bool
+    + findMeleeTargets(cat : Cat, lane : CatLane) : Unit[]
+}
+
+note bottom of CombatSystem
+  Melee range = 1 unit distance.
+  Diagonal and straight both valid.
+  Cats attack both RatWarriors
+  AND RatTower projectile sources.
+end note
+
+' ─────────────────────────────────────────
+'  WIN / LOSE CONDITION CHECKER
+' ─────────────────────────────────────────
+
+class ConditionChecker {
+    --
+    + checkWin(ratLanes : RatLane[], catLanes : CatLane[]) : bool
+    + checkLose(inventory : PlayerInventory, catLanes : CatLane[]) : bool
+}
+
+note right of ConditionChecker
+  Win: no living Rat units remain.
+  Edge case: if last cat kills last rat
+  then dies to projectile same frame →
+  checkWin() runs first → WIN.
+  Lose: no cats in inventory AND
+  no cats on any lane.
+end note
+
+' ─────────────────────────────────────────
+'  LEVEL MANAGER
+' ─────────────────────────────────────────
+
+class LevelManager {
+    - configs     : LevelConfig[]
+    - currentLevel: int
+    - catLanes    : CatLane[]
+    - ratLanes    : RatLane[]
+    - state       : GameState
+    --
+    + loadLevel(n : int) : void
+    + spawnRats() : void
+    + spawnCat(def : CatDefinition, lane : CatLane) : void
+    + update(delta : float) : void
+    + getTotalLevels() : int
+    + getCurrentConfig() : LevelConfig
+}
+
+note left of LevelManager
+  Always 3 CatLanes, 4 RatLanes.
+  7 fixed levels, same layout.
+  Levels never change lane geometry.
+  Pan camera on level intro,
+  then show "Level X Start".
+end note
+
+LevelManager "1" *-- "3" CatLane
+LevelManager "1" *-- "4" RatLane
+LevelManager "1" --> "7" LevelConfig : manages
+
+' ─────────────────────────────────────────
+'  GAME SPEED CONTROLLER
+' ─────────────────────────────────────────
+
+class SpeedController {
+    - currentSpeed : GameSpeed
+    - multipliers  : Map<GameSpeed, float>
+    --
+    + setSpeed(s : GameSpeed) : void
+    + getMultiplier() : float
+    + cycle() : void
+}
+
+note bottom of SpeedController
+  1× / 1.5× / 2× toggle.
+  No pause — pause is in settings.
+  All delta values scaled by multiplier.
+end note
+
+' ─────────────────────────────────────────
+'  CATNIP SYSTEM
+' ─────────────────────────────────────────
+
+class CatnipSystem {
+    --
+    + onTowerDestroyed(tower : RatTower, inv : PlayerInventory) : void
+    + onWarriorDefeated(warrior : RatWarrior, inv : PlayerInventory) : void
+}
+
+note right of CatnipSystem
+  Grants catnip from
+  tower and warrior kills.
+  Reward amount defined per Rat.
+end note
+
+' ─────────────────────────────────────────
+'  GAME CONTROLLER (root coordinator)
+' ─────────────────────────────────────────
+
+class GameController {
+    - state         : GameState
+    - speed         : SpeedController
+    - levelManager  : LevelManager
+    - inventory     : PlayerInventory
+    - shop          : Shop
+    - combat        : CombatSystem
+    - catnipSys     : CatnipSystem
+    - conditions    : ConditionChecker
+    - ui            : UIManager
+    - selectedCat   : CatDefinition
+    --
+    + startGame() : void
+    + startLevel(n : int) : void
+    + update(delta : float) : void
+    + onCatClicked(def : CatDefinition) : void
+    + onLaneClicked(lane : CatLane) : void
+    + onRatDied(rat : Rat) : void
+    + onCatDied(cat : Cat) : void
+    + transitionToShop() : void
+    + transitionToWin() : void
+    + transitionToLose() : void
+}
+
+note left of GameController
+  Central coordinator.
+  Mouse input → onCatClicked →
+  highlights lanes → onLaneClicked
+  → spawns cat at position 0.
+  Runs ConditionChecker each frame
+  after combat resolution.
+end note
+
+GameController "1" *-- "1" SpeedController
+GameController "1" *-- "1" LevelManager
+GameController "1" *-- "1" PlayerInventory
+GameController "1" *-- "1" Shop
+GameController "1" *-- "1" CombatSystem
+GameController "1" *-- "1" CatnipSystem
+GameController "1" *-- "1" ConditionChecker
+GameController "1" --> "1" UIManager
+
+' ─────────────────────────────────────────
+'  UI MANAGER (intentionally opaque)
+' ─────────────────────────────────────────
+
+class UIManager {
+    --
+    + showLevelIntro(level : int) : void
+    + showWinScreen() : void
+    + showLoseScreen() : void
+    + showShop(inv : PlayerInventory, shop : Shop) : void
+    + updateInventoryDisplay(inv : PlayerInventory) : void
+    + highlightLane(lane : CatLane, on : bool) : void
+    + glowCatIcon(def : CatDefinition, on : bool) : void
+    + setSpeedIndicator(speed : GameSpeed) : void
+    + doCameraIntroSweep() : void
+}
+
+note bottom of UIManager
+  All UI grouped here.
+  Inventory panel: bottom-left.
+  Click cat → glow + lane highlights.
+  "Level X Start" overlay on intro.
+  Camera pan at level start.
+end note
+
+' ─────────────────────────────────────────
+'  LANE ↔ UNIT CONTAINMENT
+' ─────────────────────────────────────────
+
+CatLane  "1" o-- "0..*" Cat        : contains
+CatLane  "1" o-- "0..*" RatWarrior : pre-placed on
+RatLane  "1" o-- "0..*" RatTower   : pre-placed on
+
+Cat       -->  CombatSystem : uses
+Rat       -->  CombatSystem : uses
+
+CatnipSystem --> PlayerInventory : credits
+
+LevelManager --> CombatSystem    : delegates combat
+LevelManager --> CatnipSystem    : routes kill events
+
+PlayerInventory "1" o-- "0..*" CatDefinition : tracks counts
+
+@enduml
